@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Citation Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>APA Citation Generator</h1>
+
+  <label for="author">Author</label>
+  <input type="text" id="author" placeholder="e.g., Smith, J. A.">
+
+  <label for="year">Year</label>
+  <input type="text" id="year" placeholder="e.g., 2021">
+
+  <label for="title">Title of Work</label>
+  <input type="text" id="title" placeholder="e.g., The Study of Music">
+
+  <label for="publisher">Publisher</label>
+  <input type="text" id="publisher" placeholder="e.g., Oxford University Press">
+
+  <button onclick="generateCitation()">Generate Citation</button>
+
+  <div id="citationOutput"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
