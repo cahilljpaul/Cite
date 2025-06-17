@@ -51,6 +51,67 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.source-type-selector {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.source-type-selector select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 16px;
+}
+
+.authors-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.authors-section h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.author-field {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.author-field .remove-author {
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  padding: 0;
+  font-size: 20px;
+}
+
+.add-author-btn {
+  background-color: #28a745;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 10px;
+}
+
+.add-author-btn:hover {
+  background-color: #218838;
+}
+
 .citation-fields {
   display: none;
   margin-bottom: 20px;
@@ -100,5 +161,18 @@ button:hover {
 .citation {
   font-size: 1.1em;
   line-height: 1.5;
+}
+
+/* Field group styles */
+.book-fields,
+.journal-fields,
+.webpage-fields {
+  margin-top: 20px;
+}
+
+/* Required field indicator */
+label.required::after {
+  content: " *";
+  color: #dc3545;
 }
   

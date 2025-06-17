@@ -17,75 +17,254 @@
   </nav>
 
   <div class="citation-form">
+    <div class="source-type-selector">
+      <label for="sourceType">Source Type:</label>
+      <select id="sourceType" onchange="updateFormFields()">
+        <option value="book">Book</option>
+        <option value="journal">Journal Article</option>
+        <option value="webpage">Web Page</option>
+        <option value="newspaper">Newspaper Article</option>
+        <option value="image">Online Image</option>
+        <option value="forum">Forum Message</option>
+        <option value="module">Module Material</option>
+        <option value="social">Social Media Post</option>
+        <option value="video">Video</option>
+        <option value="podcast">Podcast</option>
+      </select>
+    </div>
+
     <div id="apa-fields" class="citation-fields active">
-      <label for="author">Author</label>
-      <input type="text" id="author" placeholder="e.g., Smith, J. A.">
+      <div class="authors-section">
+        <h3>Authors</h3>
+        <div id="apa-authors">
+          <div class="author-field">
+            <label for="author">Author</label>
+            <input type="text" id="author" placeholder="e.g., Smith, J. A.">
+          </div>
+        </div>
+        <button type="button" class="add-author-btn" onclick="addAuthorField('apa')">+ Add Author</button>
+      </div>
 
-      <label for="year">Year</label>
-      <input type="text" id="year" placeholder="e.g., 2021">
+      <div class="book-fields">
+        <label for="year">Year</label>
+        <input type="text" id="year" placeholder="e.g., 2021">
 
-      <label for="title">Title of Work</label>
-      <input type="text" id="title" placeholder="e.g., The Study of Music">
+        <label for="title">Title of Work</label>
+        <input type="text" id="title" placeholder="e.g., The Study of Music">
 
-      <label for="publisher">Publisher</label>
-      <input type="text" id="publisher" placeholder="e.g., Oxford University Press">
+        <label for="publisher">Publisher</label>
+        <input type="text" id="publisher" placeholder="e.g., Oxford University Press">
+      </div>
+
+      <div class="journal-fields" style="display: none;">
+        <label for="journal-title">Journal Title</label>
+        <input type="text" id="journal-title" placeholder="e.g., Journal of Music Studies">
+
+        <label for="volume">Volume</label>
+        <input type="text" id="volume" placeholder="e.g., 12">
+
+        <label for="issue">Issue</label>
+        <input type="text" id="issue" placeholder="e.g., 3">
+
+        <label for="pages">Page Numbers</label>
+        <input type="text" id="pages" placeholder="e.g., 123-145">
+
+        <label for="doi">DOI (if available)</label>
+        <input type="text" id="doi" placeholder="e.g., 10.1234/abcd.2021">
+      </div>
+
+      <div class="newspaper-fields" style="display: none;">
+        <label for="newspaper-title">Newspaper Title</label>
+        <input type="text" id="newspaper-title" placeholder="e.g., The Guardian">
+
+        <label for="article-title">Article Title</label>
+        <input type="text" id="article-title" placeholder="e.g., Climate Change Impact">
+
+        <label for="publication-date">Publication Date</label>
+        <input type="date" id="publication-date">
+
+        <label for="newspaper-pages">Page Numbers</label>
+        <input type="text" id="newspaper-pages" placeholder="e.g., p. 5">
+
+        <label for="newspaper-url">URL (if online)</label>
+        <input type="url" id="newspaper-url" placeholder="e.g., https://example.com">
+      </div>
+
+      <div class="image-fields" style="display: none;">
+        <label for="image-title">Image Title</label>
+        <input type="text" id="image-title" placeholder="e.g., Sunset over Mountains">
+
+        <label for="image-platform">Platform/Website</label>
+        <input type="text" id="image-platform" placeholder="e.g., Instagram">
+
+        <label for="image-url">URL</label>
+        <input type="url" id="image-url" placeholder="e.g., https://example.com/image">
+
+        <label for="image-date">Date Accessed</label>
+        <input type="date" id="image-date">
+      </div>
+
+      <div class="webpage-fields" style="display: none;">
+        <label for="webpage-title">Page Title</label>
+        <input type="text" id="webpage-title" placeholder="e.g., About Us">
+
+        <label for="website-name">Website Name</label>
+        <input type="text" id="website-name" placeholder="e.g., Example.com">
+
+        <label for="url">URL</label>
+        <input type="url" id="url" placeholder="e.g., https://example.com">
+
+        <label for="access-date">Access Date</label>
+        <input type="date" id="access-date">
+      </div>
+
+      <div class="social-fields" style="display: none;">
+        <label for="platform">Platform</label>
+        <input type="text" id="platform" placeholder="e.g., Twitter">
+
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="e.g., @username">
+
+        <label for="post-date">Post Date</label>
+        <input type="date" id="post-date">
+
+        <label for="post-text">Post Text</label>
+        <textarea id="post-text" placeholder="Enter the post text"></textarea>
+
+        <label for="post-url">Post URL</label>
+        <input type="url" id="post-url" placeholder="e.g., https://twitter.com/username/status/123456">
+      </div>
+
+      <div class="video-fields" style="display: none;">
+        <label for="video-title">Video Title</label>
+        <input type="text" id="video-title" placeholder="e.g., How to Cite Sources">
+
+        <label for="video-platform">Platform</label>
+        <input type="text" id="video-platform" placeholder="e.g., YouTube">
+
+        <label for="channel-name">Channel Name</label>
+        <input type="text" id="channel-name" placeholder="e.g., Citation Channel">
+
+        <label for="video-date">Publication Date</label>
+        <input type="date" id="video-date">
+
+        <label for="video-url">URL</label>
+        <input type="url" id="video-url" placeholder="e.g., https://youtube.com/watch?v=123456">
+      </div>
+
+      <div class="podcast-fields" style="display: none;">
+        <label for="podcast-title">Episode Title</label>
+        <input type="text" id="podcast-title" placeholder="e.g., Episode 1: Introduction">
+
+        <label for="podcast-name">Podcast Name</label>
+        <input type="text" id="podcast-name" placeholder="e.g., The Citation Podcast">
+
+        <label for="podcast-date">Publication Date</label>
+        <input type="date" id="podcast-date">
+
+        <label for="podcast-url">URL</label>
+        <input type="url" id="podcast-url" placeholder="e.g., https://example.com/podcast/1">
+      </div>
     </div>
 
     <div id="mla-fields" class="citation-fields">
-      <label for="mla-author">Author</label>
-      <input type="text" id="mla-author" placeholder="e.g., Smith, John">
+      <div class="authors-section">
+        <h3>Authors</h3>
+        <div id="mla-authors">
+          <div class="author-field">
+            <label for="mla-author">Author</label>
+            <input type="text" id="mla-author" placeholder="e.g., Smith, John">
+          </div>
+        </div>
+        <button type="button" class="add-author-btn" onclick="addAuthorField('mla')">+ Add Author</button>
+      </div>
 
-      <label for="mla-title">Title of Work</label>
-      <input type="text" id="mla-title" placeholder="e.g., The Study of Music">
+      <div class="book-fields">
+        <label for="mla-title">Title of Work</label>
+        <input type="text" id="mla-title" placeholder="e.g., The Study of Music">
 
-      <label for="mla-publisher">Publisher</label>
-      <input type="text" id="mla-publisher" placeholder="e.g., Oxford University Press">
+        <label for="mla-publisher">Publisher</label>
+        <input type="text" id="mla-publisher" placeholder="e.g., Oxford University Press">
 
-      <label for="mla-year">Year</label>
-      <input type="text" id="mla-year" placeholder="e.g., 2021">
+        <label for="mla-year">Year</label>
+        <input type="text" id="mla-year" placeholder="e.g., 2021">
+      </div>
     </div>
 
     <div id="chicago-fields" class="citation-fields">
-      <label for="chicago-author">Author</label>
-      <input type="text" id="chicago-author" placeholder="e.g., Smith, John">
+      <div class="authors-section">
+        <h3>Authors</h3>
+        <div id="chicago-authors">
+          <div class="author-field">
+            <label for="chicago-author">Author</label>
+            <input type="text" id="chicago-author" placeholder="e.g., Smith, John">
+          </div>
+        </div>
+        <button type="button" class="add-author-btn" onclick="addAuthorField('chicago')">+ Add Author</button>
+      </div>
 
-      <label for="chicago-title">Title of Work</label>
-      <input type="text" id="chicago-title" placeholder="e.g., The Study of Music">
+      <div class="book-fields">
+        <label for="chicago-title">Title of Work</label>
+        <input type="text" id="chicago-title" placeholder="e.g., The Study of Music">
 
-      <label for="chicago-publisher">Publisher</label>
-      <input type="text" id="chicago-publisher" placeholder="e.g., Oxford University Press">
+        <label for="chicago-publisher">Publisher</label>
+        <input type="text" id="chicago-publisher" placeholder="e.g., Oxford University Press">
 
-      <label for="chicago-year">Year</label>
-      <input type="text" id="chicago-year" placeholder="e.g., 2021">
+        <label for="chicago-year">Year</label>
+        <input type="text" id="chicago-year" placeholder="e.g., 2021">
 
-      <label for="chicago-city">City</label>
-      <input type="text" id="chicago-city" placeholder="e.g., New York">
+        <label for="chicago-city">City</label>
+        <input type="text" id="chicago-city" placeholder="e.g., New York">
+      </div>
     </div>
 
     <div id="harvard-fields" class="citation-fields">
-      <label for="harvard-author">Author</label>
-      <input type="text" id="harvard-author" placeholder="e.g., Smith, J.">
+      <div class="authors-section">
+        <h3>Authors</h3>
+        <div id="harvard-authors">
+          <div class="author-field">
+            <label for="harvard-author">Author</label>
+            <input type="text" id="harvard-author" placeholder="e.g., Smith, J.">
+          </div>
+        </div>
+        <button type="button" class="add-author-btn" onclick="addAuthorField('harvard')">+ Add Author</button>
+      </div>
 
-      <label for="harvard-year">Year</label>
-      <input type="text" id="harvard-year" placeholder="e.g., 2021">
+      <div class="book-fields">
+        <label for="harvard-year">Year</label>
+        <input type="text" id="harvard-year" placeholder="e.g., 2021">
 
-      <label for="harvard-title">Title of Work</label>
-      <input type="text" id="harvard-title" placeholder="e.g., The Study of Music">
+        <label for="harvard-title">Title of Work</label>
+        <input type="text" id="harvard-title" placeholder="e.g., The Study of Music">
 
-      <label for="harvard-publisher">Publisher</label>
-      <input type="text" id="harvard-publisher" placeholder="e.g., Oxford University Press">
+        <label for="harvard-publisher">Publisher</label>
+        <input type="text" id="harvard-publisher" placeholder="e.g., Oxford University Press">
 
-      <label for="harvard-place">Place of Publication</label>
-      <input type="text" id="harvard-place" placeholder="e.g., Oxford">
+        <label for="harvard-place">Place of Publication</label>
+        <input type="text" id="harvard-place" placeholder="e.g., Oxford">
 
-      <label for="harvard-edition">Edition (if not first)</label>
-      <input type="text" id="harvard-edition" placeholder="e.g., 2nd edn">
+        <label for="harvard-edition">Edition (if not first)</label>
+        <input type="text" id="harvard-edition" placeholder="e.g., 2nd edn">
+      </div>
     </div>
 
-    <button onclick="generateCitation()">Generate Citation</button>
+    <div class="citation-actions">
+      <button onclick="generateCitation()">Generate Citation</button>
+      <button onclick="addToReferenceList()" class="secondary-btn">Add to Reference List</button>
+    </div>
   </div>
 
   <div id="citationOutput"></div>
+
+  <div id="referenceList" class="reference-list">
+    <h2>Reference List</h2>
+    <div id="referenceItems"></div>
+    <div class="reference-actions">
+      <button onclick="exportReferences('text')">Export as Text</button>
+      <button onclick="exportReferences('html')">Export as HTML</button>
+      <button onclick="clearReferenceList()" class="danger-btn">Clear List</button>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>

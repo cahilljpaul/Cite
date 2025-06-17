@@ -35,6 +35,15 @@ function formatPublisher(publisher) {
   ).join(' ');
 }
 
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+}
+
 // Handle citation style navigation
 document.querySelectorAll('.style-btn').forEach(button => {
   button.addEventListener('click', () => {
@@ -49,74 +58,526 @@ document.querySelectorAll('.style-btn').forEach(button => {
   });
 });
 
+// Handle source type changes
+function updateFormFields() {
+  const sourceType = document.getElementById('sourceType').value;
+  const activeStyle = document.querySelector('.style-btn.active').getAttribute('data-style');
+  const fieldsContainer = document.getElementById(`${activeStyle}-fields`);
+
+  // Hide all field groups
+  fieldsContainer.querySelectorAll('.book-fields, .journal-fields, .webpage-fields, .newspaper-fields, .image-fields, .social-fields, .video-fields, .podcast-fields').forEach(group => {
+    group.style.display = 'none';
+  });
+
+  // Show relevant field group
+  const relevantFields = fieldsContainer.querySelector(`.${sourceType}-fields`);
+  if (relevantFields) {
+    relevantFields.style.display = 'block';
+  }
+}
+
+// Handle multiple authors
+function addAuthorField(style) {
+  const authorsContainer = document.getElementById(`${style}-authors`);
+  const authorCount = authorsContainer.children.length;
+  
+  if (authorCount >= 10) {
+    showError('Maximum of 10 authors allowed.');
+    return;
+  }
+
+  const authorField = document.createElement('div');
+  authorField.className = 'author-field';
+  authorField.innerHTML = `
+    <label for="${style}-author-${authorCount + 1}">Author ${authorCount + 1}</label>
+    <input type="text" id="${style}-author-${authorCount + 1}" placeholder="e.g., ${style === 'harvard' ? 'Smith, J.' : 'Smith, John'}">
+    ${authorCount > 0 ? '<button type="button" class="remove-author" onclick="removeAuthorField(this)">×</button>' : ''}
+  `;
+  
+  authorsContainer.appendChild(authorField);
+}
+
+function removeAuthorField(button) {
+  button.parentElement.remove();
+  // Renumber remaining authors
+  const authorsContainer = button.closest('.authors-section');
+  const authorFields = authorsContainer.querySelectorAll('.author-field');
+  authorFields.forEach((field, index) => {
+    const label = field.querySelector('label');
+    const input = field.querySelector('input');
+    label.textContent = `Author ${index + 1}`;
+    input.id = input.id.replace(/\d+$/, index + 1);
+  });
+}
+
+function getAuthors(style) {
+  const authorsContainer = document.getElementById(`${style}-authors`);
+  const authorInputs = authorsContainer.querySelectorAll('input');
+  const authors = Array.from(authorInputs).map(input => formatAuthorName(input.value.trim())).filter(author => author);
+  
+  if (authors.length === 0) return null;
+  
+  // Format authors based on count
+  if (authors.length === 1) return authors[0];
+  if (authors.length === 2) return `${authors[0]} and ${authors[1]}`;
+  if (authors.length === 3) return `${authors[0]}, ${authors[1]}, and ${authors[2]}`;
+  return `${authors[0]} et al.`;
+}
+
+// Reference List Management
+let referenceList = [];
+
+function addToReferenceList() {
+  const citation = document.querySelector('.citation').textContent;
+  const style = document.querySelector('.style-btn.active').getAttribute('data-style');
+  const sourceType = document.getElementById('sourceType').value;
+  
+  referenceList.push({
+    citation,
+    style,
+    sourceType,
+    timestamp: new Date().toISOString()
+  });
+  
+  updateReferenceList();
+  showSuccess('Citation added to reference list');
+}
+
+function removeFromReferenceList(index) {
+  referenceList.splice(index, 1);
+  updateReferenceList();
+}
+
+function updateReferenceList() {
+  const container = document.getElementById('referenceItems');
+  container.innerHTML = '';
+  
+  referenceList.forEach((item, index) => {
+    const div = document.createElement('div');
+    div.className = 'reference-item';
+    div.innerHTML = `
+      <span class="citation">${item.citation}</span>
+      <button class="remove-reference" onclick="removeFromReferenceList(${index})">×</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function exportReferences(format) {
+  let content = '';
+  
+  if (format === 'text') {
+    content = referenceList.map(item => item.citation).join('\n\n');
+    downloadFile(content, 'references.txt', 'text/plain');
+  } else if (format === 'html') {
+    content = `
+      <html>
+        <head>
+          <title>Reference List</title>
+          <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
+            .citation { margin-bottom: 20px; }
+          </style>
+        </head>
+        <body>
+          <h1>Reference List</h1>
+          ${referenceList.map(item => `<div class="citation">${item.citation}</div>`).join('')}
+        </body>
+      </html>
+    `;
+    downloadFile(content, 'references.html', 'text/html');
+  }
+}
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearReferenceList() {
+  if (confirm('Are you sure you want to clear the reference list?')) {
+    referenceList = [];
+    updateReferenceList();
+  }
+}
+
+function showSuccess(message) {
+  const output = document.getElementById('citationOutput');
+  output.innerHTML = `<span style="color: green;">${message}</span>`;
+  setTimeout(() => {
+    output.innerHTML = '';
+  }, 3000);
+}
+
 function generateCitation() {
   const activeStyle = document.querySelector('.style-btn.active').getAttribute('data-style');
+  const sourceType = document.getElementById('sourceType').value;
   let citation = '';
+
+  const authors = getAuthors(activeStyle);
+  if (!authors) {
+    showError('Please enter at least one author.');
+    return;
+  }
 
   switch (activeStyle) {
     case 'apa':
-      const author = formatAuthorName(document.getElementById('author').value.trim());
-      const year = document.getElementById('year').value.trim();
-      const title = formatTitleCase(document.getElementById('title').value.trim());
-      const publisher = formatPublisher(document.getElementById('publisher').value.trim());
+      if (sourceType === 'book') {
+        const year = document.getElementById('year').value.trim();
+        const title = formatTitleCase(document.getElementById('title').value.trim());
+        const publisher = formatPublisher(document.getElementById('publisher').value.trim());
 
-      if (!author || !year || !title || !publisher) {
-        showError('Please fill out all fields.');
-        return;
+        if (!year || !title || !publisher) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors} (${year}). <em>${title}</em>. ${publisher}.`;
+      } else if (sourceType === 'journal') {
+        const year = document.getElementById('year').value.trim();
+        const title = formatTitleCase(document.getElementById('title').value.trim());
+        const journalTitle = formatTitleCase(document.getElementById('journal-title').value.trim());
+        const volume = document.getElementById('volume').value.trim();
+        const issue = document.getElementById('issue').value.trim();
+        const pages = document.getElementById('pages').value.trim();
+        const doi = document.getElementById('doi').value.trim();
+
+        if (!year || !title || !journalTitle || !volume || !pages) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors} (${year}). ${title}. <em>${journalTitle}</em>, ${volume}${issue ? `(${issue})` : ''}, ${pages}.${doi ? ` https://doi.org/${doi}` : ''}`;
+      } else if (sourceType === 'newspaper') {
+        const year = document.getElementById('year').value.trim();
+        const title = formatTitleCase(document.getElementById('article-title').value.trim());
+        const newspaperTitle = formatTitleCase(document.getElementById('newspaper-title').value.trim());
+        const date = document.getElementById('publication-date').value;
+        const pages = document.getElementById('newspaper-pages').value.trim();
+        const url = document.getElementById('newspaper-url').value.trim();
+
+        if (!year || !title || !newspaperTitle || !date) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors} (${year}, ${formatDate(date)}). ${title}. <em>${newspaperTitle}</em>${pages ? `, ${pages}` : ''}.${url ? ` Retrieved from ${url}` : ''}`;
+      } else if (sourceType === 'image') {
+        const title = formatTitleCase(document.getElementById('image-title').value.trim());
+        const platform = formatTitleCase(document.getElementById('image-platform').value.trim());
+        const url = document.getElementById('image-url').value.trim();
+        const date = document.getElementById('image-date').value;
+
+        if (!title || !platform || !url || !date) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors} (${formatDate(date)}). <em>${title}</em> [Image]. ${platform}. ${url}`;
+      } else if (sourceType === 'webpage') {
+        const title = formatTitleCase(document.getElementById('webpage-title').value.trim());
+        const website = formatTitleCase(document.getElementById('website-name').value.trim());
+        const url = document.getElementById('url').value.trim();
+        const date = document.getElementById('access-date').value;
+
+        if (!title || !website || !url || !date) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors} (${formatDate(date)}). ${title}. <em>${website}</em>. Retrieved from ${url}`;
+      } else if (sourceType === 'social') {
+        const platform = formatTitleCase(document.getElementById('platform').value.trim());
+        const username = document.getElementById('username').value.trim();
+        const text = document.getElementById('post-text').value.trim();
+        const date = document.getElementById('post-date').value;
+        const url = document.getElementById('post-url').value.trim();
+
+        if (!platform || !username || !text || !date || !url) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${username} [${platform}]. (${formatDate(date)}). ${text.substring(0, 50)}${text.length > 50 ? '...' : ''} [Status update]. Retrieved from ${url}`;
+      } else if (sourceType === 'video') {
+        const title = formatTitleCase(document.getElementById('video-title').value.trim());
+        const platform = formatTitleCase(document.getElementById('video-platform').value.trim());
+        const channel = formatTitleCase(document.getElementById('channel-name').value.trim());
+        const date = document.getElementById('video-date').value;
+        const url = document.getElementById('video-url').value.trim();
+
+        if (!title || !platform || !channel || !date || !url) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${channel}. (${formatDate(date)}). <em>${title}</em> [Video]. ${platform}. ${url}`;
+      } else if (sourceType === 'podcast') {
+        const title = formatTitleCase(document.getElementById('podcast-title').value.trim());
+        const podcast = formatTitleCase(document.getElementById('podcast-name').value.trim());
+        const date = document.getElementById('podcast-date').value;
+        const url = document.getElementById('podcast-url').value.trim();
+
+        if (!title || !podcast || !date || !url) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors} (${formatDate(date)}). <em>${title}</em> [Audio podcast episode]. In ${podcast}. ${url}`;
       }
-
-      citation = `${author} (${year}). <em>${title}</em>. ${publisher}.`;
-      break;
-
-    case 'mla':
-      const mlaAuthor = formatAuthorName(document.getElementById('mla-author').value.trim());
-      const mlaTitle = formatTitleCase(document.getElementById('mla-title').value.trim());
-      const mlaPublisher = formatPublisher(document.getElementById('mla-publisher').value.trim());
-      const mlaYear = document.getElementById('mla-year').value.trim();
-
-      if (!mlaAuthor || !mlaTitle || !mlaPublisher || !mlaYear) {
-        showError('Please fill out all fields.');
-        return;
-      }
-
-      citation = `${mlaAuthor}. <em>${mlaTitle}</em>. ${mlaPublisher}, ${mlaYear}.`;
-      break;
-
-    case 'chicago':
-      const chicagoAuthor = formatAuthorName(document.getElementById('chicago-author').value.trim());
-      const chicagoTitle = formatTitleCase(document.getElementById('chicago-title').value.trim());
-      const chicagoPublisher = formatPublisher(document.getElementById('chicago-publisher').value.trim());
-      const chicagoYear = document.getElementById('chicago-year').value.trim();
-      const chicagoCity = formatTitleCase(document.getElementById('chicago-city').value.trim());
-
-      if (!chicagoAuthor || !chicagoTitle || !chicagoPublisher || !chicagoYear || !chicagoCity) {
-        showError('Please fill out all fields.');
-        return;
-      }
-
-      citation = `${chicagoAuthor}. <em>${chicagoTitle}</em>. ${chicagoCity}: ${chicagoPublisher}, ${chicagoYear}.`;
       break;
 
     case 'harvard':
-      const harvardAuthor = formatAuthorName(document.getElementById('harvard-author').value.trim());
-      const harvardYear = document.getElementById('harvard-year').value.trim();
-      const harvardTitle = formatTitleCase(document.getElementById('harvard-title').value.trim());
-      const harvardPublisher = formatPublisher(document.getElementById('harvard-publisher').value.trim());
-      const harvardPlace = formatTitleCase(document.getElementById('harvard-place').value.trim());
-      const harvardEdition = document.getElementById('harvard-edition').value.trim();
+      if (sourceType === 'book') {
+        const year = document.getElementById('harvard-year').value.trim();
+        const title = formatTitleCase(document.getElementById('harvard-title').value.trim());
+        const publisher = formatPublisher(document.getElementById('harvard-publisher').value.trim());
+        const place = formatTitleCase(document.getElementById('harvard-place').value.trim());
+        const edition = document.getElementById('harvard-edition').value.trim();
 
-      if (!harvardAuthor || !harvardYear || !harvardTitle || !harvardPublisher || !harvardPlace) {
-        showError('Please fill out all required fields.');
-        return;
+        if (!year || !title || !publisher || !place) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors} (${year}) <em>${title}</em>${edition ? `, ${edition}` : ''}. ${place}: ${publisher}.`;
+      } else if (sourceType === 'journal') {
+        const year = document.getElementById('harvard-year').value.trim();
+        const title = formatTitleCase(document.getElementById('harvard-title').value.trim());
+        const journalTitle = formatTitleCase(document.getElementById('journal-title').value.trim());
+        const volume = document.getElementById('volume').value.trim();
+        const issue = document.getElementById('issue').value.trim();
+        const pages = document.getElementById('pages').value.trim();
+
+        if (!year || !title || !journalTitle || !volume || !pages) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors} (${year}) '${title}', <em>${journalTitle}</em>, ${volume}${issue ? `(${issue})` : ''}, pp. ${pages}.`;
       }
+      break;
 
-      // Format according to Cite Them Right (Harvard) style
-      citation = `${harvardAuthor} (${harvardYear}) <em>${harvardTitle}</em>${harvardEdition ? `, ${harvardEdition}` : ''}. ${harvardPlace}: ${harvardPublisher}.`;
+    case 'mla':
+      if (sourceType === 'book') {
+        const year = document.getElementById('year').value.trim();
+        const title = formatTitleCase(document.getElementById('title').value.trim());
+        const publisher = formatPublisher(document.getElementById('publisher').value.trim());
+
+        if (!year || !title || !publisher) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. <em>${title}</em>. ${publisher}, ${year}.`;
+      } else if (sourceType === 'journal') {
+        const year = document.getElementById('year').value.trim();
+        const title = formatTitleCase(document.getElementById('title').value.trim());
+        const journalTitle = formatTitleCase(document.getElementById('journal-title').value.trim());
+        const volume = document.getElementById('volume').value.trim();
+        const issue = document.getElementById('issue').value.trim();
+        const pages = document.getElementById('pages').value.trim();
+        const doi = document.getElementById('doi').value.trim();
+
+        if (!year || !title || !journalTitle || !volume || !pages) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. "${title}." <em>${journalTitle}</em>, vol. ${volume}${issue ? `, no. ${issue}` : ''}, ${year}, pp. ${pages}.${doi ? ` doi:${doi}` : ''}`;
+      } else if (sourceType === 'newspaper') {
+        const year = document.getElementById('year').value.trim();
+        const title = formatTitleCase(document.getElementById('article-title').value.trim());
+        const newspaperTitle = formatTitleCase(document.getElementById('newspaper-title').value.trim());
+        const date = document.getElementById('publication-date').value;
+        const pages = document.getElementById('newspaper-pages').value.trim();
+        const url = document.getElementById('newspaper-url').value.trim();
+
+        if (!year || !title || !newspaperTitle || !date) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. "${title}." <em>${newspaperTitle}</em>, ${formatDate(date)}${pages ? `, p. ${pages}` : ''}.${url ? ` ${url}` : ''}`;
+      } else if (sourceType === 'image') {
+        const title = formatTitleCase(document.getElementById('image-title').value.trim());
+        const platform = formatTitleCase(document.getElementById('image-platform').value.trim());
+        const url = document.getElementById('image-url').value.trim();
+        const date = document.getElementById('image-date').value;
+
+        if (!title || !platform || !url || !date) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. <em>${title}</em>. ${formatDate(date)}, ${platform}, ${url}.`;
+      } else if (sourceType === 'webpage') {
+        const title = formatTitleCase(document.getElementById('webpage-title').value.trim());
+        const website = formatTitleCase(document.getElementById('website-name').value.trim());
+        const url = document.getElementById('url').value.trim();
+        const date = document.getElementById('access-date').value;
+
+        if (!title || !website || !url || !date) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. "${title}." <em>${website}</em>, ${formatDate(date)}, ${url}.`;
+      } else if (sourceType === 'social') {
+        const platform = formatTitleCase(document.getElementById('platform').value.trim());
+        const username = document.getElementById('username').value.trim();
+        const text = document.getElementById('post-text').value.trim();
+        const date = document.getElementById('post-date').value;
+        const url = document.getElementById('post-url').value.trim();
+
+        if (!platform || !username || !text || !date || !url) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${username}. "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}" ${platform}, ${formatDate(date)}, ${url}.`;
+      } else if (sourceType === 'video') {
+        const title = formatTitleCase(document.getElementById('video-title').value.trim());
+        const platform = formatTitleCase(document.getElementById('video-platform').value.trim());
+        const channel = formatTitleCase(document.getElementById('channel-name').value.trim());
+        const date = document.getElementById('video-date').value;
+        const url = document.getElementById('video-url').value.trim();
+
+        if (!title || !platform || !channel || !date || !url) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${channel}. "${title}." ${platform}, ${formatDate(date)}, ${url}.`;
+      } else if (sourceType === 'podcast') {
+        const title = formatTitleCase(document.getElementById('podcast-title').value.trim());
+        const podcast = formatTitleCase(document.getElementById('podcast-name').value.trim());
+        const date = document.getElementById('podcast-date').value;
+        const url = document.getElementById('podcast-url').value.trim();
+
+        if (!title || !podcast || !date || !url) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. "${title}." <em>${podcast}</em>, ${formatDate(date)}, ${url}.`;
+      }
+      break;
+
+    case 'chicago':
+      if (sourceType === 'book') {
+        const year = document.getElementById('year').value.trim();
+        const title = formatTitleCase(document.getElementById('title').value.trim());
+        const publisher = formatPublisher(document.getElementById('publisher').value.trim());
+
+        if (!year || !title || !publisher) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. <em>${title}</em>. ${publisher}, ${year}.`;
+      } else if (sourceType === 'journal') {
+        const year = document.getElementById('year').value.trim();
+        const title = formatTitleCase(document.getElementById('title').value.trim());
+        const journalTitle = formatTitleCase(document.getElementById('journal-title').value.trim());
+        const volume = document.getElementById('volume').value.trim();
+        const issue = document.getElementById('issue').value.trim();
+        const pages = document.getElementById('pages').value.trim();
+        const doi = document.getElementById('doi').value.trim();
+
+        if (!year || !title || !journalTitle || !volume || !pages) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. "${title}." <em>${journalTitle}</em> ${volume}, no. ${issue} (${year}): ${pages}.${doi ? ` https://doi.org/${doi}` : ''}`;
+      } else if (sourceType === 'newspaper') {
+        const year = document.getElementById('year').value.trim();
+        const title = formatTitleCase(document.getElementById('article-title').value.trim());
+        const newspaperTitle = formatTitleCase(document.getElementById('newspaper-title').value.trim());
+        const date = document.getElementById('publication-date').value;
+        const pages = document.getElementById('newspaper-pages').value.trim();
+        const url = document.getElementById('newspaper-url').value.trim();
+
+        if (!year || !title || !newspaperTitle || !date) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. "${title}." <em>${newspaperTitle}</em>, ${formatDate(date)}${pages ? `, ${pages}` : ''}.${url ? ` ${url}` : ''}`;
+      } else if (sourceType === 'image') {
+        const title = formatTitleCase(document.getElementById('image-title').value.trim());
+        const platform = formatTitleCase(document.getElementById('image-platform').value.trim());
+        const url = document.getElementById('image-url').value.trim();
+        const date = document.getElementById('image-date').value;
+
+        if (!title || !platform || !url || !date) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. <em>${title}</em>. ${formatDate(date)}. ${platform}. ${url}.`;
+      } else if (sourceType === 'webpage') {
+        const title = formatTitleCase(document.getElementById('webpage-title').value.trim());
+        const website = formatTitleCase(document.getElementById('website-name').value.trim());
+        const url = document.getElementById('url').value.trim();
+        const date = document.getElementById('access-date').value;
+
+        if (!title || !website || !url || !date) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. "${title}." ${website}. Last modified ${formatDate(date)}. ${url}.`;
+      } else if (sourceType === 'social') {
+        const platform = formatTitleCase(document.getElementById('platform').value.trim());
+        const username = document.getElementById('username').value.trim();
+        const text = document.getElementById('post-text').value.trim();
+        const date = document.getElementById('post-date').value;
+        const url = document.getElementById('post-url').value.trim();
+
+        if (!platform || !username || !text || !date || !url) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${username}. "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}" ${platform}. ${formatDate(date)}. ${url}.`;
+      } else if (sourceType === 'video') {
+        const title = formatTitleCase(document.getElementById('video-title').value.trim());
+        const platform = formatTitleCase(document.getElementById('video-platform').value.trim());
+        const channel = formatTitleCase(document.getElementById('channel-name').value.trim());
+        const date = document.getElementById('video-date').value;
+        const url = document.getElementById('video-url').value.trim();
+
+        if (!title || !platform || !channel || !date || !url) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${channel}. "${title}." ${platform}. ${formatDate(date)}. ${url}.`;
+      } else if (sourceType === 'podcast') {
+        const title = formatTitleCase(document.getElementById('podcast-title').value.trim());
+        const podcast = formatTitleCase(document.getElementById('podcast-name').value.trim());
+        const date = document.getElementById('podcast-date').value;
+        const url = document.getElementById('podcast-url').value.trim();
+
+        if (!title || !podcast || !date || !url) {
+          showError('Please fill out all required fields.');
+          return;
+        }
+
+        citation = `${authors}. "${title}." <em>${podcast}</em>. ${formatDate(date)}. ${url}.`;
+      }
       break;
   }
 
   document.getElementById('citationOutput').innerHTML = `
-    <strong>Formatted ${activeStyle.toUpperCase()} Citation:</strong><br><br>
+    <strong>Formatted ${activeStyle.toUpperCase()} Citation (${sourceType}):</strong><br><br>
     <span class="citation">${citation}</span>
   `;
 }
