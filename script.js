@@ -44,18 +44,27 @@ function formatDate(dateString) {
   });
 }
 
-// Handle citation style navigation
-document.querySelectorAll('.style-btn').forEach(button => {
-  button.addEventListener('click', () => {
-    // Remove active class from all buttons and fields
-    document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.citation-fields').forEach(field => field.classList.remove('active'));
-    
-    // Add active class to clicked button and corresponding fields
-    button.classList.add('active');
-    const style = button.getAttribute('data-style');
-    document.getElementById(`${style}-fields`).classList.add('active');
+// Initialize event listeners when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle citation style navigation
+  document.querySelectorAll('.style-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      // Remove active class from all buttons and fields
+      document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.citation-fields').forEach(field => field.classList.remove('active'));
+      
+      // Add active class to clicked button and corresponding fields
+      button.classList.add('active');
+      const style = button.getAttribute('data-style');
+      document.getElementById(`${style}-fields`).classList.add('active');
+    });
   });
+
+  // Handle source type changes
+  document.getElementById('sourceType').addEventListener('change', updateFormFields);
+
+  // Initialize the first citation style
+  document.querySelector('.style-btn.active').click();
 });
 
 // Handle source type changes
@@ -95,18 +104,46 @@ function addAuthorField(style) {
   `;
   
   authorsContainer.appendChild(authorField);
+  
+  // Focus the new input field
+  const newInput = authorField.querySelector('input');
+  newInput.focus();
 }
 
 function removeAuthorField(button) {
-  button.parentElement.remove();
+  const authorField = button.parentElement;
+  const authorsContainer = authorField.closest('.authors-section');
+  
+  // Don't remove if it's the last author field
+  if (authorsContainer.querySelectorAll('.author-field').length <= 1) {
+    showError('At least one author is required.');
+    return;
+  }
+  
+  authorField.remove();
+  
   // Renumber remaining authors
-  const authorsContainer = button.closest('.authors-section');
   const authorFields = authorsContainer.querySelectorAll('.author-field');
   authorFields.forEach((field, index) => {
     const label = field.querySelector('label');
     const input = field.querySelector('input');
+    const style = field.closest('.citation-fields').id.split('-')[0];
+    
     label.textContent = `Author ${index + 1}`;
-    input.id = input.id.replace(/\d+$/, index + 1);
+    input.id = `${style}-author-${index + 1}`;
+    
+    // Add remove button to all fields except the first one
+    const removeButton = field.querySelector('.remove-author');
+    if (index === 0) {
+      if (removeButton) removeButton.remove();
+    } else if (!removeButton) {
+      const newRemoveButton = document.createElement('button');
+      newRemoveButton.type = 'button';
+      newRemoveButton.className = 'remove-author';
+      newRemoveButton.innerHTML = '×';
+      newRemoveButton.onclick = function() { removeAuthorField(this); };
+      field.appendChild(newRemoveButton);
+    }
   });
 }
 
