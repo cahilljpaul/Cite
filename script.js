@@ -156,19 +156,58 @@ function updateReferenceList() {
     const div = document.createElement('div');
     div.className = 'reference-item';
     div.innerHTML = `
-      <span class="citation">${item.citation}</span>
-      <button class="remove-reference" onclick="removeFromReferenceList(${index})">×</button>
+      <div class="reference-content">
+        <span class="citation">${item.citation}</span>
+        <div class="reference-actions">
+          <button onclick="copyReference(${index})" class="action-btn" title="Copy citation">
+            <i class="fas fa-copy"></i>
+          </button>
+          <button onclick="editReference(${index})" class="action-btn" title="Edit citation">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button onclick="removeFromReferenceList(${index})" class="action-btn" title="Remove citation">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+      <div class="reference-meta">
+        <span class="style-badge">${item.style.toUpperCase()}</span>
+        <span class="type-badge">${item.sourceType}</span>
+      </div>
     `;
     container.appendChild(div);
   });
 }
 
+function copyReference(index) {
+  const citation = referenceList[index].citation;
+  navigator.clipboard.writeText(citation).then(() => {
+    showSuccess('Citation copied to clipboard!');
+  }).catch(err => {
+    showError('Failed to copy citation. Please try again.');
+  });
+}
+
+function editReference(index) {
+  const item = referenceList[index];
+  // Set the form to match the citation's style and source type
+  document.querySelector(`.style-btn[data-style="${item.style}"]`).click();
+  document.getElementById('sourceType').value = item.sourceType;
+  updateFormFields();
+  
+  // TODO: Implement form field population based on the citation
+  // This would require parsing the citation and setting the form fields accordingly
+  
+  showSuccess('Edit mode activated. Please update the citation details.');
+}
+
 function exportReferences(format) {
   let content = '';
+  const timestamp = new Date().toISOString().split('T')[0];
   
   if (format === 'text') {
     content = referenceList.map(item => item.citation).join('\n\n');
-    downloadFile(content, 'references.txt', 'text/plain');
+    downloadFile(content, `references_${timestamp}.txt`, 'text/plain');
   } else if (format === 'html') {
     content = `
       <html>
@@ -177,16 +216,48 @@ function exportReferences(format) {
           <style>
             body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
             .citation { margin-bottom: 20px; }
+            .meta { color: #666; font-size: 0.9em; margin-bottom: 5px; }
           </style>
         </head>
         <body>
           <h1>Reference List</h1>
-          ${referenceList.map(item => `<div class="citation">${item.citation}</div>`).join('')}
+          ${referenceList.map(item => `
+            <div class="citation">
+              <div class="meta">${item.style.toUpperCase()} - ${item.sourceType}</div>
+              ${item.citation}
+            </div>
+          `).join('')}
         </body>
       </html>
     `;
-    downloadFile(content, 'references.html', 'text/html');
+    downloadFile(content, `references_${timestamp}.html`, 'text/html');
+  } else if (format === 'bibtex') {
+    content = referenceList.map(item => generateBibTeX(item)).join('\n\n');
+    downloadFile(content, `references_${timestamp}.bib`, 'text/plain');
   }
+}
+
+function generateBibTeX(item) {
+  const key = `${item.sourceType}_${Date.now()}`;
+  let entry = `@${item.sourceType}{${key},\n`;
+  
+  // Add common fields
+  entry += `  author = {${item.citation.split('.')[0]}},\n`;
+  
+  // Add type-specific fields
+  switch (item.sourceType) {
+    case 'book':
+      entry += `  title = {${item.citation.split('.').slice(1, -2).join('.')}},\n`;
+      entry += `  year = {${item.citation.match(/\d{4}/)[0]}},\n`;
+      break;
+    case 'journal':
+      // Add journal-specific fields
+      break;
+    // Add other source types
+  }
+  
+  entry += '}';
+  return entry;
 }
 
 function downloadFile(content, filename, type) {
@@ -578,8 +649,67 @@ function generateCitation() {
 
   document.getElementById('citationOutput').innerHTML = `
     <strong>Formatted ${activeStyle.toUpperCase()} Citation (${sourceType}):</strong><br><br>
-    <span class="citation">${citation}</span>
+    <div class="citation-container">
+      <span class="citation">${citation}</span>
+      <div class="citation-actions">
+        <button onclick="copyCitation()" class="action-btn" title="Copy citation">
+          <i class="fas fa-copy"></i> Copy
+        </button>
+        <button onclick="addToReferenceList()" class="action-btn" title="Add to reference list">
+          <i class="fas fa-plus"></i> Add to List
+        </button>
+        <button onclick="printCitation()" class="action-btn" title="Print citation">
+          <i class="fas fa-print"></i> Print
+        </button>
+      </div>
+    </div>
   `;
+}
+
+function copyCitation() {
+  const citation = document.querySelector('.citation').textContent;
+  navigator.clipboard.writeText(citation).then(() => {
+    showSuccess('Citation copied to clipboard!');
+  }).catch(err => {
+    showError('Failed to copy citation. Please try again.');
+  });
+}
+
+function printCitation() {
+  const citation = document.querySelector('.citation').textContent;
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Citation</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .citation {
+            font-size: 14pt;
+            line-height: 1.5;
+            margin: 20px 0;
+          }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="citation">${citation}</div>
+        <div class="no-print">
+          <button onclick="window.print()">Print</button>
+          <button onclick="window.close()">Close</button>
+        </div>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
 function showError(message) {
