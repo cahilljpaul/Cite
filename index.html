@@ -12,6 +12,7 @@
       <button class="style-btn active" data-style="apa">APA</button>
       <button class="style-btn" data-style="mla">MLA</button>
       <button class="style-btn" data-style="chicago">Chicago</button>
+      <button class="style-btn" data-style="harvard">Harvard (Cite Them Right)</button>
     </div>
   </nav>
 
@@ -59,6 +60,26 @@
 
       <label for="chicago-city">City</label>
       <input type="text" id="chicago-city" placeholder="e.g., New York">
+    </div>
+
+    <div id="harvard-fields" class="citation-fields">
+      <label for="harvard-author">Author</label>
+      <input type="text" id="harvard-author" placeholder="e.g., Smith, J.">
+
+      <label for="harvard-year">Year</label>
+      <input type="text" id="harvard-year" placeholder="e.g., 2021">
+
+      <label for="harvard-title">Title of Work</label>
+      <input type="text" id="harvard-title" placeholder="e.g., The Study of Music">
+
+      <label for="harvard-publisher">Publisher</label>
+      <input type="text" id="harvard-publisher" placeholder="e.g., Oxford University Press">
+
+      <label for="harvard-place">Place of Publication</label>
+      <input type="text" id="harvard-place" placeholder="e.g., Oxford">
+
+      <label for="harvard-edition">Edition (if not first)</label>
+      <input type="text" id="harvard-edition" placeholder="e.g., 2nd edn">
     </div>
 
     <button onclick="generateCitation()">Generate Citation</button>

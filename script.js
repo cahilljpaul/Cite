@@ -96,6 +96,23 @@ function generateCitation() {
 
       citation = `${chicagoAuthor}. <em>${chicagoTitle}</em>. ${chicagoCity}: ${chicagoPublisher}, ${chicagoYear}.`;
       break;
+
+    case 'harvard':
+      const harvardAuthor = formatAuthorName(document.getElementById('harvard-author').value.trim());
+      const harvardYear = document.getElementById('harvard-year').value.trim();
+      const harvardTitle = formatTitleCase(document.getElementById('harvard-title').value.trim());
+      const harvardPublisher = formatPublisher(document.getElementById('harvard-publisher').value.trim());
+      const harvardPlace = formatTitleCase(document.getElementById('harvard-place').value.trim());
+      const harvardEdition = document.getElementById('harvard-edition').value.trim();
+
+      if (!harvardAuthor || !harvardYear || !harvardTitle || !harvardPublisher || !harvardPlace) {
+        showError('Please fill out all required fields.');
+        return;
+      }
+
+      // Format according to Cite Them Right (Harvard) style
+      citation = `${harvardAuthor} (${harvardYear}) <em>${harvardTitle}</em>${harvardEdition ? `, ${harvardEdition}` : ''}. ${harvardPlace}: ${harvardPublisher}.`;
+      break;
   }
 
   document.getElementById('citationOutput').innerHTML = `
