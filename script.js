@@ -1,3 +1,40 @@
+// Case formatting functions
+function formatTitleCase(text) {
+  // Split into words and handle special cases
+  return text.toLowerCase().split(' ').map((word, index) => {
+    // Skip capitalizing certain words unless they're the first word
+    const skipWords = ['a', 'an', 'the', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to', 'from', 'by', 'in', 'of'];
+    if (index !== 0 && skipWords.includes(word)) {
+      return word;
+    }
+    // Capitalize the first letter of each word
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+}
+
+function formatAuthorName(name) {
+  // Handle different author name formats
+  const parts = name.split(',');
+  if (parts.length > 1) {
+    // Format: "Last, First"
+    const lastName = parts[0].trim();
+    const firstName = parts[1].trim();
+    return `${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}, ${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()}`;
+  } else {
+    // Format: "First Last"
+    return name.split(' ').map(part => 
+      part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+    ).join(' ');
+  }
+}
+
+function formatPublisher(publisher) {
+  // Capitalize first letter of each word in publisher name
+  return publisher.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+}
+
 // Handle citation style navigation
 document.querySelectorAll('.style-btn').forEach(button => {
   button.addEventListener('click', () => {
@@ -18,10 +55,10 @@ function generateCitation() {
 
   switch (activeStyle) {
     case 'apa':
-      const author = document.getElementById('author').value.trim();
+      const author = formatAuthorName(document.getElementById('author').value.trim());
       const year = document.getElementById('year').value.trim();
-      const title = document.getElementById('title').value.trim();
-      const publisher = document.getElementById('publisher').value.trim();
+      const title = formatTitleCase(document.getElementById('title').value.trim());
+      const publisher = formatPublisher(document.getElementById('publisher').value.trim());
 
       if (!author || !year || !title || !publisher) {
         showError('Please fill out all fields.');
@@ -32,9 +69,9 @@ function generateCitation() {
       break;
 
     case 'mla':
-      const mlaAuthor = document.getElementById('mla-author').value.trim();
-      const mlaTitle = document.getElementById('mla-title').value.trim();
-      const mlaPublisher = document.getElementById('mla-publisher').value.trim();
+      const mlaAuthor = formatAuthorName(document.getElementById('mla-author').value.trim());
+      const mlaTitle = formatTitleCase(document.getElementById('mla-title').value.trim());
+      const mlaPublisher = formatPublisher(document.getElementById('mla-publisher').value.trim());
       const mlaYear = document.getElementById('mla-year').value.trim();
 
       if (!mlaAuthor || !mlaTitle || !mlaPublisher || !mlaYear) {
@@ -46,11 +83,11 @@ function generateCitation() {
       break;
 
     case 'chicago':
-      const chicagoAuthor = document.getElementById('chicago-author').value.trim();
-      const chicagoTitle = document.getElementById('chicago-title').value.trim();
-      const chicagoPublisher = document.getElementById('chicago-publisher').value.trim();
+      const chicagoAuthor = formatAuthorName(document.getElementById('chicago-author').value.trim());
+      const chicagoTitle = formatTitleCase(document.getElementById('chicago-title').value.trim());
+      const chicagoPublisher = formatPublisher(document.getElementById('chicago-publisher').value.trim());
       const chicagoYear = document.getElementById('chicago-year').value.trim();
-      const chicagoCity = document.getElementById('chicago-city').value.trim();
+      const chicagoCity = formatTitleCase(document.getElementById('chicago-city').value.trim());
 
       if (!chicagoAuthor || !chicagoTitle || !chicagoPublisher || !chicagoYear || !chicagoCity) {
         showError('Please fill out all fields.');
