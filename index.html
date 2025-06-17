@@ -6,22 +6,63 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <nav class="citation-nav">
+    <h1>Citation Generator</h1>
+    <div class="citation-styles">
+      <button class="style-btn active" data-style="apa">APA</button>
+      <button class="style-btn" data-style="mla">MLA</button>
+      <button class="style-btn" data-style="chicago">Chicago</button>
+    </div>
+  </nav>
 
-  <h1>APA Citation Generator</h1>
+  <div class="citation-form">
+    <div id="apa-fields" class="citation-fields active">
+      <label for="author">Author</label>
+      <input type="text" id="author" placeholder="e.g., Smith, J. A.">
 
-  <label for="author">Author</label>
-  <input type="text" id="author" placeholder="e.g., Smith, J. A.">
+      <label for="year">Year</label>
+      <input type="text" id="year" placeholder="e.g., 2021">
 
-  <label for="year">Year</label>
-  <input type="text" id="year" placeholder="e.g., 2021">
+      <label for="title">Title of Work</label>
+      <input type="text" id="title" placeholder="e.g., The Study of Music">
 
-  <label for="title">Title of Work</label>
-  <input type="text" id="title" placeholder="e.g., The Study of Music">
+      <label for="publisher">Publisher</label>
+      <input type="text" id="publisher" placeholder="e.g., Oxford University Press">
+    </div>
 
-  <label for="publisher">Publisher</label>
-  <input type="text" id="publisher" placeholder="e.g., Oxford University Press">
+    <div id="mla-fields" class="citation-fields">
+      <label for="mla-author">Author</label>
+      <input type="text" id="mla-author" placeholder="e.g., Smith, John">
 
-  <button onclick="generateCitation()">Generate Citation</button>
+      <label for="mla-title">Title of Work</label>
+      <input type="text" id="mla-title" placeholder="e.g., The Study of Music">
+
+      <label for="mla-publisher">Publisher</label>
+      <input type="text" id="mla-publisher" placeholder="e.g., Oxford University Press">
+
+      <label for="mla-year">Year</label>
+      <input type="text" id="mla-year" placeholder="e.g., 2021">
+    </div>
+
+    <div id="chicago-fields" class="citation-fields">
+      <label for="chicago-author">Author</label>
+      <input type="text" id="chicago-author" placeholder="e.g., Smith, John">
+
+      <label for="chicago-title">Title of Work</label>
+      <input type="text" id="chicago-title" placeholder="e.g., The Study of Music">
+
+      <label for="chicago-publisher">Publisher</label>
+      <input type="text" id="chicago-publisher" placeholder="e.g., Oxford University Press">
+
+      <label for="chicago-year">Year</label>
+      <input type="text" id="chicago-year" placeholder="e.g., 2021">
+
+      <label for="chicago-city">City</label>
+      <input type="text" id="chicago-city" placeholder="e.g., New York">
+    </div>
+
+    <button onclick="generateCitation()">Generate Citation</button>
+  </div>
 
   <div id="citationOutput"></div>
 
